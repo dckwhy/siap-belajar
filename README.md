@@ -1,5 +1,9 @@
 # App Web
 
+## Deskripsi
+Guru Belajar adalah gerakan kolaboratif antara pemerintah, masyarakat, dan organisasi yang terlibat dalam pengembangan guru dan personel pendidikan (GTK) untuk menyediakan berbagai program pembelajaran online yang relevan yang dapat diikuti oleh guru dan personel pendidikan.
+Guru Belajar adalah sistem berbasis web. Sistem ini memiliki fitur manajemen seri, jenis kelas, kelas, dan kohort. Guru dan personel pendidikan dapat memilih sebuah seri, lalu mengikuti kelas-kelas yang tersedia di setiap seri.
+
 ## Project setup
 ```
 cp .env.example .env
