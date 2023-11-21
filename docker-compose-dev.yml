@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  web:
+    image: docker-hub.dev.siap.id/siap-belajar/web-devel:latest
+    build:
+      context: .
+      dockerfile: Dockerfile-prod
+    ports:
+      - 5055:80

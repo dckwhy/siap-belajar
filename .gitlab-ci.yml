@@ -1,0 +1,91 @@
+stages:
+  - build
+  - deploy
+
+.build-docker: &build-docker
+  stage: build
+  tags:
+    - devel-39
+  script:
+    - echo "${V_ENV}" > .env
+    - echo "${V_COMPOSE_FILE}" > docker-compose.yml
+    # build image
+    - docker-compose -f docker-compose.yml build
+    # push to registry
+    - docker-compose -f docker-compose.yml push
+
+.deploy-docker: &deploy-docker
+  stage: deploy
+  script:
+    - curl -X POST $V_HOOK
+
+Build Devel:
+  <<: *build-docker
+  only:
+    - devel
+  variables:
+    V_COMPOSE_FILE: ${DEVEL_COMPOSE_FILE}
+    V_ENV: ${DEVEL_ENV}
+
+Deploy Devel:
+  <<: *deploy-docker
+  only:
+    - devel
+  variables:
+    V_HOOK: $DEVEL_HOOK
+
+Build Demo:
+  <<: *build-docker
+  only:
+    - demo
+  variables:
+    V_COMPOSE_FILE: ${DEMO_COMPOSE_FILE}
+    V_ENV: ${DEMO_ENV}
+
+Deploy Demo:
+  <<: *deploy-docker
+  only:
+    - demo
+  variables:
+    V_HOOK: $DEMO_HOOK
+
+Build RIIL:
+  stage: build
+  image: node:12
+  tags:
+    - devel-40-docker-exc
+  cache:
+    key: $CI_JOB_NAME-$CI_COMMIT_REF_SLUG
+    paths:
+      - node_modules/
+  artifacts:
+    name: $CI_JOB_NAME-$CI_COMMIT_REF_SLUG
+    paths:
+      - dist/
+  script:
+    - echo "${V_ENV}" > .env
+    - yarn install
+    - yarn build
+  only:
+    - riil
+  variables:
+    V_ENV: $RIIL_ENV
+
+Deploy RIIL:
+  stage: deploy
+  only:
+    - riil
+  tags:
+    - devel-37
+  script:
+    - source ./helper_script.sh
+    - start_ssh_agent $CI_COMMIT_SHA
+    - ssh-add -t 600 <(echo "$V_SERVER_KEY")
+    - for srv in ${V_SERVER//;/ } ; do echo "deploy to ${srv}"; rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" dist/ ${srv}:${V_FOLDER}/; done
+    - kill_sshagent $CI_COMMIT_SHA
+
+  variables:
+    V_ENV: ${RIIL_ENV}
+    V_SERVER: $RIIL_SERVER
+    V_FOLDER: $RIIL_FOLDER
+    V_SERVER_KEY: $RIIL_SERVER_KEY
